@@ -1,0 +1,293 @@
+<html>
+	<head>
+		<title>Steppenstuka ALPHA</title>
+		<style type="text/css">
+			body, html {
+				background-color : #000000;
+				color            : #e2e2e2;
+				font-family      : Arial, Helvetica;
+				font-size        : 16px;
+			}
+			a {
+				color : #e2e2e2;
+			}
+			a:hover {
+				color : #ffffff;
+			}
+			h1 {
+				font-size : 20px;
+				padding   : 0;
+				margin    : 0;
+			}
+			#help {
+				position : absolute;
+				left     : 425;
+				top      : 0;
+				width    : 320px;
+			}
+			#footer {
+				position : absolute;
+				left     : 0;
+				top      : 200;
+				width    : 420px;
+			}
+			#starter {
+				width            : 320px;
+				border           : 0;
+				background-color : #000000;
+				color            : #ffffff;
+				font-size        : 16px;
+				font-weight      : bold;
+			}
+			#keyboard {
+				border   : 1px solid red;
+				width    : 420px;
+				height   : 200px;
+				opacity  : 0;
+				position : absolute;
+				top      : 0;
+				left     : 0;
+			}
+			div.parallax {
+				position : absolute;
+				left     : 0;
+				top      : 0;
+				width    : 420px;
+				height   : 200px;
+			}
+			#parallax_layer_0 {
+				z-index          : 1;
+				background-image : url(layer-0.gif);
+				background-image : url(background.gif);
+			}
+			#parallax_layer_1 {
+				z-index          : 2;
+				background-image : url(layer-1.gif);
+				background-image : url(clouds.gif);
+				opacity          : .8;
+				/* background-position : 20 0;*/
+			}
+			#parallax_layer_2 {
+				z-index          : 3;
+				background-image : url(layer-2.gif);
+				background-image : url(hills.gif);
+			}
+			#parallax_layer_3 {
+				z-index          : 4;
+				background-image : url(layer-3.gif);
+				background-image : url(hills_front.gif);
+			}
+			#parallax_object {
+				z-index          : 5;
+				width            : 22px;
+				height           : 20px;
+				background-image : url(ship.gif);
+			}
+			#parallax_weapon {
+				z-index          : 5;
+				background-image : url(rocket.gif);
+				width            : 12px;
+				height           : 4px;
+				top              : 8px;
+				left             : 10px;
+				background-repeat: no-repeat;
+			}
+			#parallax_explosion {
+				z-index          : 6;
+				background-image : url(explosion1.gif);
+				height           : 180px;
+				background-repeat: no-repeat;
+			}
+			#parallax_score {
+				z-index  : 10;
+				position : absolute;
+				top      : 180px;
+				left     : 3px;
+				font-weight : bold;
+			}
+		</style>
+		<script type="text/javascript">
+			var game_running = false;
+			var parallax_position = new Array();
+			parallax_position[1] = 0;
+			parallax_position[2] = 0;
+			parallax_position[3] = 0;
+			var parallax_timeout;
+
+			var keycodes = new Array();
+			keycodes[38] = 'up';
+			keycodes[40] = 'down';
+			keycodes[37] = 'left';
+			keycodes[39] = 'right';
+			keycodes[32] = 'fire';
+			keycodes[13] = 'enter';
+
+			var rocket_position = Array(310, 0);
+			var rocket_timeout;
+			var rocket_speed = 50;
+
+			var object_position = Array(0, 0);
+
+			function evaluate_key(event) {
+				if( game_running == false && keycodes[event.keyCode] != 'enter' ) return;
+				else if( game_running == false && keycodes[event.keyCode] == 'enter' ) start_game();
+
+				//console.log(event.keyCode);
+				if( keycodes[event.keyCode] ) {
+					// move object
+					if( keycodes[event.keyCode] == 'down' ) {
+						var pos = document.getElementById('parallax_object').style.top.replace(/px/, '');
+						if( pos < 180 ) {
+							document.getElementById('parallax_object').style.top = pos - 0 + 6;
+						}
+					} else if( keycodes[event.keyCode] == 'up' ) {
+						var pos = document.getElementById('parallax_object').style.top.replace(/px/, '');
+						if( pos > 6 ) {
+							document.getElementById('parallax_object').style.top = pos - 6;
+						} else {
+							document.getElementById('parallax_object').style.top = 1;
+						}
+					} else if( keycodes[event.keyCode] == 'left' ) {
+						var pos = document.getElementById('parallax_object').style.left.replace(/px/, '');
+						if( pos > 6 ) {
+							document.getElementById('parallax_object').style.left = pos - 6;
+						} else {
+							document.getElementById('parallax_object').style.left = 1;
+						}
+					} else if( keycodes[event.keyCode] == 'right' ) {
+						var pos = document.getElementById('parallax_object').style.left.replace(/px/, '');
+						if( pos < 400 ) {
+							document.getElementById('parallax_object').style.left = pos - 0 + 6;
+						}
+					}
+					calculate_object_position();
+				}
+			}
+
+			function calculate_object_position() {
+				var style = document.getElementById('parallax_object').style;
+				object_position[0] = style.left.replace(/px/, '') -0 + 10;
+				object_position[1] = style.top.replace(/px/, '') -0 + 8;
+			}
+
+			function rocket(y) {
+				if( game_running == false ) return;
+
+				rocket_speed = Math.random()*20;
+				if( rocket_speed < 5 ) {
+					rocket_speed = 5;
+				}
+				if( rocket_speed > 20 ) {
+					rocket_speed = 20;
+				}
+				var div = document.createElement('div');
+				div.id = 'parallax_weapon';
+				div.className = 'parallax';
+				div.style.top = y +'px';
+				div.style.left = '300px';
+				div.style.postition = 'absolute';
+				rocket_position[1] = y;
+				rocket_position[0] = 420;
+				document.body.appendChild(div);
+				rocket_step(rocket_speed);
+			}
+
+			function rocket_step() {
+				if( game_running == false ) return;
+
+				calculate_score();
+				if( rocket_position[0] > 0 ) {
+					rocket_position[0] -= 5;
+					document.getElementById('parallax_weapon').style.left = rocket_position[0];
+					rocket_timeout = window.setTimeout('rocket_step(rocket_speed)', rocket_speed);
+				} else {
+					document.body.removeChild(document.getElementById('parallax_weapon'));
+					rocket(Math.random()*190);
+				}
+				check_collision();
+			}
+
+			function calculate_score() {
+				if( game_running == false ) return;
+
+				if( 1
+					&& rocket_position[0] < object_position[0] ) {
+					document.getElementById('score').innerHTML =
+						document.getElementById('score').innerHTML -0 +Math.round( object_position[0] / 70 ) *2 +1;
+				}
+			}
+
+			function check_collision() {
+				if( 1
+					&& Math.abs( rocket_position[0] - object_position[0] ) <= 10
+					&& Math.abs( rocket_position[1] - object_position[1] ) <= 10 ) {
+					game_running = false;
+					document.getElementById('parallax_explosion').style.display = 'block';
+					document.getElementById('parallax_explosion').style.left = (object_position[0] -12) +'px';
+					document.getElementById('parallax_explosion').style.top  = (object_position[1] -12) +'px';
+					if( document.getElementById('parallax_weapon') ) {
+						document.body.removeChild( document.getElementById('parallax_weapon') );
+					}
+				}
+			}
+
+			function parallax_step(timeout) {
+				if( game_running == false ) return;
+
+				parallax_position[1] -= 1;
+				parallax_position[2] -= 3;
+				parallax_position[3] -= 5;
+				document.getElementById('parallax_layer_1').style.backgroundPosition = parallax_position[1] +'px 0';
+				document.getElementById('parallax_layer_2').style.backgroundPosition = parallax_position[2] +'px 0';
+				document.getElementById('parallax_layer_3').style.backgroundPosition = parallax_position[3] +'px 0';
+				parallax_timeout = window.setTimeout('parallax_step('+timeout+');', timeout);
+			}
+			
+			function start_game() {
+				if( game_running == true ) return;
+
+				game_running = true;
+				document.getElementById('parallax_explosion').style.display = 'none';
+				document.getElementById('score').innerHTML = 0;
+				document.getElementById('keyboard').focus();
+				parallax_step(document.getElementById('parallax_speed').value);
+				window.setTimeout('rocket(Math.random()*200);', 5000);
+			}
+
+		</script>
+	</head>
+	<body>
+		<div id="parallax_layer_0" class="parallax"></div>
+		<div id="parallax_layer_1" class="parallax"></div>
+		<div id="parallax_layer_2" class="parallax"></div>
+		<div id="parallax_layer_3" class="parallax"></div>
+		<div id="parallax_object" class="parallax parallax_object"></div>
+		<div id="parallax_explosion" class="parallax" style="display: none;"></div>
+		<input type="text" id="keyboard" onkeydown="evaluate_key(event)" value="place cursor here to control ship" />
+		<input style="display: none" type="text" id="parallax_speed" value="50" />
+		<div id="parallax_score">
+			Score: <span id="score">0</span>
+		</div>
+		<div id="help">
+			<h1>Steppenstuka ALPHA&#8482;</h1><br />
+			<strong>Objectives:</strong>
+			<ul>
+				<li>Avoid the Rockets!</li>
+				<li>Get higher Scores by moving to the right.</li>
+				<li>Use Arrow Keys to move.</li>
+			</ul>
+			<input
+				id="starter"
+				type="text"
+				onclick="javascript: void(start_game());"
+				onkeydown="evaluate_key(event)"
+				value="Click here to start the Game!" />
+			<br />
+			<br />
+		</div>
+		<div id="footer">
+			<small>&copy; TheBunman, 2009</small><br />
+			<small>Background Image from by David Iliff (Creative Commons)</small>
+		</div>
+	</body>
+</html>
