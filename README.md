@@ -9,4 +9,4 @@ Another really old vanilla JS game that is just here for my nostalgia and your c
 * a nice parallax
 
 # Start
-[Start game](parallax.html)
+[Start game](https://derbunman.github.io/steppenstuka/)
